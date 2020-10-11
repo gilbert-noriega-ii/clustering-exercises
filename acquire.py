@@ -1,5 +1,4 @@
 from env import host, user, password
-import seaborn as sns
 import pandas as pd
 import numpy as np
 import os
@@ -18,21 +17,24 @@ def new_zillow_data():
     This function reads the zillow data from CodeUp database into a df,
     write it to a csv file, and returns the df.
     '''
-    sql_query = """
-                SELECT *
-                FROM predictions_2017 AS pred
-                JOIN properties_2017 AS prop ON pred.parcelid = prop.parcelid
-                LEFT JOIN airconditioningtype AS ac ON ac.airconditioningtypeid = prop.airconditioningtypeid
-                LEFT JOIN architecturalstyletype AS arc ON arc.architecturalstyletypeid = prop.architecturalstyletypeid
-                LEFT JOIN buildingclasstype AS bc ON bc.buildingclasstypeid = prop.buildingclasstypeid
-                LEFT JOIN heatingorsystemtype AS heat ON heat.heatingorsystemtypeid = prop.heatingorsystemtypeid
-                LEFT JOIN propertylandusetype AS plu ON plu.propertylandusetypeid = prop.propertylandusetypeid
-                LEFT JOIN storytype AS st ON st.storytypeid = prop.storytypeid
-                LEFT JOIN typeconstructiontype AS con ON con.typeconstructiontypeid = prop.typeconstructiontypeid
-                WHERE transactiondate IN (SELECT MAX(transactiondate) FROM predictions_2017 GROUP BY parcelid)
-                AND prop.latitude IS NOT NULL
-                AND prop.longitude IS NOT NULL
-                """
+    sql_query = '''
+    SELECT *
+    FROM properties_2017
+    JOIN(
+        SELECT parcelid, logerror, max(transactiondate) AS lasttransactiondate
+        FROM predictions_2017
+        GROUP BY parcelid, logerror
+        ) AS pred USING(parcelid)
+    LEFT JOIN airconditioningtype USING(airconditioningtypeid)
+    LEFT JOIN architecturalstyletype USING(architecturalstyletypeid)
+    LEFT JOIN buildingclasstype USING(buildingclasstypeid)
+    LEFT JOIN heatingorsystemtype USING(heatingorsystemtypeid)
+    LEFT JOIN propertylandusetype USING(propertylandusetypeid)
+    LEFT JOIN storytype USING(storytypeid)
+    LEFT JOIN typeconstructiontype USING(typeconstructiontypeid)
+    WHERE latitude IS NOT NULL
+    AND longitude IS NOT NULL;
+                '''
 
     df = pd.read_sql(sql_query, get_connection('zillow'))
     df.to_csv('zillow_df.csv')
