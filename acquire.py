@@ -4,6 +4,7 @@ import numpy as np
 import os
 
 
+################################### Get Connection to SQL Function ###################################
 
 def get_connection(db, user = user, host = host, password = password):
     '''
@@ -11,6 +12,10 @@ def get_connection(db, user = user, host = host, password = password):
     create a connection url to access the Codeup db.
     '''
     return f'mysql+pymysql://{user}:{password}@{host}/{db}'
+    
+
+###################################  Acquire New Zillow Data Function ###################################
+
 
 def new_zillow_data():
     '''
@@ -18,29 +23,32 @@ def new_zillow_data():
     write it to a csv file, and returns the df.
     '''
     sql_query = '''
-    SELECT *
-    FROM properties_2017
-    JOIN(
-        SELECT parcelid, logerror, max(transactiondate) AS lasttransactiondate
-        FROM predictions_2017
-        GROUP BY parcelid, logerror
-        ) AS pred USING(parcelid)
-    LEFT JOIN airconditioningtype USING(airconditioningtypeid)
-    LEFT JOIN architecturalstyletype USING(architecturalstyletypeid)
-    LEFT JOIN buildingclasstype USING(buildingclasstypeid)
-    LEFT JOIN heatingorsystemtype USING(heatingorsystemtypeid)
-    LEFT JOIN propertylandusetype USING(propertylandusetypeid)
-    LEFT JOIN storytype USING(storytypeid)
-    LEFT JOIN typeconstructiontype USING(typeconstructiontypeid)
-    WHERE latitude IS NOT NULL
-    AND longitude IS NOT NULL;
+                select * from properties_2017
+                join (select id, logerror, pid, tdate from predictions_2017 pred_2017
+                join (SELECT parcelid as pid, Max(transactiondate) as tdate FROM predictions_2017 GROUP BY parcelid) as sq1
+                on (pred_2017.parcelid = sq1.pid and pred_2017.transactiondate = sq1.tdate)) as sq2
+                on (properties_2017.parcelid = sq2.pid)
+                left join airconditioningtype using (airconditioningtypeid)
+                left join architecturalstyletype using (architecturalstyletypeid)
+                left join buildingclasstype using (buildingclasstypeid)
+                left join heatingorsystemtype using (heatingorsystemtypeid)
+                left join propertylandusetype using (propertylandusetypeid)
+                left join storytype using (storytypeid)
+                left join typeconstructiontype using (typeconstructiontypeid)
+                left join unique_properties using (parcelid)
+                where latitude is not null 
+                and longitude is not null
+                and tdate between '2017-01-01' and '2017-12-31';
                 '''
-
     df = pd.read_sql(sql_query, get_connection('zillow'))
     df.to_csv('zillow_df.csv')
     return df
 
-def get_zillow_data(cached=False):
+
+###################################  Get Zillow Data Function ###################################
+
+
+    def get_zillow_data(cached=False):
     '''
     This function reads in zillow data from CodeUp database if cached == False 
     or if cached == True reads in mall customers df from a csv file, returns df.
@@ -50,4 +58,3 @@ def get_zillow_data(cached=False):
     else:
         df = pd.read_csv('zillow_df.csv', index_col=0)
     return df
-    
