@@ -48,7 +48,7 @@ def new_zillow_data():
 ###################################  Get Zillow Data Function ###################################
 
 
-    def get_zillow_data(cached=False):
+def get_zillow_data(cached=False):
     '''
     This function reads in zillow data from CodeUp database if cached == False 
     or if cached == True reads in mall customers df from a csv file, returns df.
