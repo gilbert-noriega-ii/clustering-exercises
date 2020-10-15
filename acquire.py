@@ -58,3 +58,25 @@ def get_zillow_data(cached=False):
     else:
         df = pd.read_csv('zillow_df.csv', index_col=0)
     return df
+
+
+def new_iris_data():
+    '''
+    This function reads the iris data from CodeUp database into a df,
+    write it to a csv file, and returns the df.
+    '''
+    sql_query = 'SELECT * FROM measurements AS m JOIN species USING (species_id)'
+    df = pd.read_sql(sql_query, get_connection('iris_db'))
+    df.to_csv('iris.csv')
+    return df
+
+def get_iris_data(cached=False):
+    '''
+    This function reads in iris data from CodeUp database if cached == False 
+    or if cached == True reads in mall customers df from a csv file, returns df.
+    '''
+    if cached or os.path.isfile('iris.csv') == False:
+        df = new_iris_data()
+    else:
+        df = pd.read_csv('iris.csv', index_col=0)
+    return df
