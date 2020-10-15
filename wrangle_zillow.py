@@ -9,14 +9,20 @@ def wrangle_zillow(cached=True):
     df = get_zillow_data()
     #filter out properties that are not single unit
     df = df[df.propertylandusetypeid.isin([260,261])]
+    #changing fips number to labeled county
+    df['county'] = df.fips.replace([6037, 6059, 6111],['los_angeles', 'orange', 'ventura'])
     #drop duplicate or unnecessary columns
-    df = df.drop(columns = ["id", "id.1", "propertylandusetypeid", "heatingorsystemtypeid", "propertyzoningdesc", "calculatedbathnbr"])
+    df = df.drop(columns = ["id", "id.1", "propertylandusetypeid", "heatingorsystemtypeid", "propertyzoningdesc", "calculatedbathnbr", "finishedsquarefeet12", "fips"])
     #filter out bedrooms and bathrooms == 0
     df = df[(df.bedroomcnt > 0) & (df.bathroomcnt > 0)]
+    #filter out houses less than 400 square feet
+    df = df[df.calculatedfinishedsquarefeet > 400]
     #fill NaN units with 1
     df.unitcnt = df.unitcnt.fillna(1.0)
     #filter out all units not equal to 1
     df = df[df.unitcnt == 1]
+    #dropping unitcnt since they are all the same and more unnecessary columns
+    df = df.drop(columns = ["unitcnt", "propertylandusedesc", "propertycountylandusecode", "assessmentyear", "pid", "regionidcounty"])
     #filter out columns and rows with more than 40% null values
     df = handle_missing_values(df, .6, .6)
     #filling NaN heating systems with None
@@ -31,7 +37,7 @@ def wrangle_zillow(cached=True):
         validate[col].fillna(value = mode, inplace = True)
         test[col].fillna(value = mode, inplace = True)
     #missing continuous values will be replaced with the median
-    cols_cont = ['lotsizesquarefeet', 'finishedsquarefeet12', 'structuretaxvaluedollarcnt', 'fullbathcnt', 'calculatedfinishedsquarefeet', 'taxamount', 'landtaxvaluedollarcnt', 'taxvaluedollarcnt']
+    cols_cont = ['lotsizesquarefeet', 'structuretaxvaluedollarcnt', 'fullbathcnt', 'calculatedfinishedsquarefeet', 'taxamount', 'landtaxvaluedollarcnt', 'taxvaluedollarcnt']
     for col in cols_cont:
         median = train[col].median()
         train[col].fillna(median, inplace=True)
