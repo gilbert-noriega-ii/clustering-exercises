@@ -1,5 +1,7 @@
 # Clustering Repository
 
+<img src="https://www.mathworks.com/help/examples/fuzzy/win64/fcmdemo_codepad_01.png">
+
 ## Learning Goals
 
 1. Be able to discuss and discover use cases for clustering across multiple industries.
